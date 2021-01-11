@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<meta name="Description" content="Enter your description here"/>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+<link rel="shortcut icon" href="">
+<style>
+    .hide{
+        display: none;
+    }
+    .visible{
+        display: block;
+    }
+</style>
+<title>Home</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header bg-info text-white text-center mt-3">
+                <h5>LIVE CRUD OPERATION</h5>
+            </div>
+        </div>
+        <form action="" class="hide">
+            {% csrf_token %}
+        </form>
+
+        <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                                    <div class="card-header"><h5>Add To Database Live</h5></div>
+                                    <div class="card-body">
+                                            <label class="mt-3">Full Name</label>
+                                            <input type="text" class="form-control" placeholder="Enter Full Name" name="fullname" id="fullname">
+                                            
+                                            <label class="mt-3">Code</label>
+                                            <input type="text" class="form-control" placeholder="Enter Code" name="code" id="code">
+                
+                                            <label class="mt-3">Mobile</label>
+                                            <input type="text" class="form-control" placeholder="01XXXXXXXXX" name="mobile" id="mobile">
+
+                                            <input type="hidden" name="updateid" id="updateid">
+                                        
+                                            <button class="btn btn-success mt-3" id="save">Save</button>
+                                            <button class="btn btn-info mt-3 hide" id="update">Update</button>
+                                            <button class="btn btn-warning mt-3 hide" id="reset">Reset</button>
+                                    </div>
+                                </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="alert alert-success">
+                        <h5 class="text-center">Your Database</h5>
+                    </div>
+
+
+                    <div class="mt-3">
+                    </div>
+
+                    
+                    <div id="showdata">  
+                    
+                    {% if data %}
+                                {% for data in data %}
+                                    <div class="card mt-3" id="data_id_{{data.id}}">
+                                        <div class="card-header">
+                                            <h6>{{ data.fullname }}</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p><strong>CODE: {{ data.code }}</strong></p>
+                                            <p><strong>MOBILE: {{ data.mobile }}</strong></p>
+                                            <button class="btn btn-warning text-white" id="edit_data" data-id="{{ data.id }}">Edit</button>
+
+                                            <span class="ml-2">
+                                                    <button class="btn btn-danger" id="delete_data" data-id="{{ data.id }}">Delete</button>
+                                            </span>
+
+                                        </div>
+                                    </div>
+
+                                    {% endfor %}
+
+                    {% else %}
+                </div>
+
+                    <div class="alert alert-danger text-center" id="nodata">
+                        <h5>NO DATA AVAILABLE</h5>
+                    </div>
+                        
+                    {% endif %}
+                        
+                    
+
+                </div>
+        </div>
+
+        
+
+
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var csrf = $('input[name=csrfmiddlewaretoken]').val();
+        $('#fullname').val(null);
+        $('#code').val(null);
+        $('#mobile').val(null);
+        var global;
+
+        $('#save').on('click',function(e){
+            e.preventDefault();
+            var codeValue = $('#code').val();
+            var mobileValue = $('#mobile').val();
+            var fullnameValue=$('#fullname').val();
+            var mydatavalue = {csrfmiddlewaretoken:csrf, fullname:fullnameValue, code:codeValue, mobile:mobileValue};
+
+            
+            $.ajax({
+                        url : "http://127.0.0.1:8000/api/details/",
+                        type : "POST",
+                        data : mydatavalue,
+                        error: function (data) {
+                                console.log('Error');
+                            },
+                        success:function(data)
+                        {
+                            console.log(data);
+                            console.log(data.id);
+                            var id = data.id;
+                            var fullname = data.fullname;
+                            var code = data.code;
+                            var mobile = data.mobile;
+
+                            var user = '<div class="card mt-3" id="data_id_'+id+'"">';
+                            user +='<div class="card-header">';
+                            user +='<h6>'+fullname+'</h6>';
+                            user +='</div>';          
+                            user +='<div class="card-body">';
+                            user +='<p><strong>CODE: '+code+'</strong></p>';
+                            user +='<p><strong>MOBILE: '+mobile+'</strong></p>';
+                            user +='<button class="btn btn-warning text-white" id="edit_data" data-id="'+id+'">Edit</button>';
+                            user +='<span class="ml-2">';
+                            user +='<button class="btn btn-danger" id="delete_data" data-id="'+id+'">Delete</button>';
+                            user +='</span>';
+                            user +='</div>';
+                            user +='</div>';
+
+                            $('#showdata').prepend(user);
+
+                            $('#fullname').val(null);
+                            $('#code').val(null);
+                            $('#mobile').val(null);
+                            $('#nodata').addClass('hide');
+
+                        }
+
+                        });
+        });
+
+        $('#showdata').on('click', '#delete_data',function(e){
+            e.preventDefault();
+            console.log(csrf);
+            var data_id = 0;
+            data_id = $(this).data('id');
+            var mydiv = "#data_id_"+data_id;
+            console.log(mydiv);
+            $.ajax({
+                type: "DELETE",
+                url: "http://127.0.0.1:8000/api/details/delete/"+data_id+"/",
+
+                beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", csrf);
+                    },
+                    
+                success: function (response) {
+                    console.log("Success");
+                    $(""+mydiv+"").closest("div").remove();
+                }
+            });
+
+        });
+
+
+        $('#showdata').on('click', '#edit_data',function(e){
+            e.preventDefault();
+            console.log(csrf);
+            var data_id = 0;
+            data_id = $(this).data('id');
+            var mydiv = "#data_id_"+data_id;
+            console.log(mydiv);
+            global = data_id;
+            $.ajax({
+                type: "GET",
+                url: "http://127.0.0.1:8000/api/details/"+data_id+"/",
+
+                beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", csrf);
+                    },
+                    
+                success: function (data) {
+                    console.log(data);
+                    var fullnameValue = data.fullname;
+                    var codeValue = data.code;
+                    var mobileValue = data.mobile;
+                    var updateid = data.id;
+                    $('#fullname').val(fullnameValue);
+                    $('#code').val(codeValue);
+                    $('#mobile').val(mobileValue);
+                    $('#updateid').val(updateid);
+                    $('#save').addClass('hide');
+                    $('#update').removeClass('hide');
+                    $('#reset').removeClass('hide');
+                     
+                }
+            });
+
+
+
+        });
+
+
+        $('#reset').on('click',function(e){
+            e.preventDefault();
+            $('#reset').addClass('hide');
+            $('#update').addClass('hide');
+            $('#save').removeClass('hide');
+            $('#fullname').val(null);
+            $('#code').val(null);
+            $('#mobile').val(null);
+            $('#updateid').val(null);
+        });
+
+        
+
+
+        $('#update').on('click', function(e){
+            e.preventDefault();
+            console.log("----------------------------");
+            var data_id = $('#updateid').val();
+            var codeValue = $('#code').val();
+            var mobileValue = $('#mobile').val();
+            var fullnameValue=$('#fullname').val();
+            var mydiv = "#data_id_"+data_id;
+            var mydatavalue = {csrfmiddlewaretoken:csrf, id:data_id, fullname:fullnameValue, code:codeValue, mobile:mobileValue};
+            $.ajax({
+                type: "PUT",
+                url: "http://127.0.0.1:8000/api/details/"+data_id+"/",
+                data:mydatavalue,
+                beforeSend: function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", csrf);
+                    },
+                    
+                success: function (data) {
+                    console.log(data);
+                    $(""+mydiv+"").closest("div").remove();
+                    var user = '<div class="card mt-3" id="data_id_'+data_id+'"">';
+                    user +='<div class="card-header">';
+                    user +='<h6>'+fullnameValue+'</h6>';
+                    user +='</div>';          
+                    user +='<div class="card-body">';
+                    user +='<p><strong>CODE: '+codeValue+'</strong></p>';
+                    user +='<p><strong>MOBILE: '+mobileValue+'</strong></p>';
+                    user +='<button class="btn btn-warning text-white" id="edit_data" data-id="'+data_id+'">Edit</button>';
+                    user +='<span class="ml-2">';
+                    user +='<button class="btn btn-danger" id="delete_data" data-id="'+data_id+'">Delete</button>';
+                    user +='</span>';
+                    user +='</div>';
+                    user +='</div>';
+
+                    $('#showdata').prepend(user);
+                    $('#fullname').val(null);
+                    $('#code').val(null);
+                    $('#mobile').val(null);
+                    $('#updateid').val(null);
+
+                }
+            });
+        });
+
+
+
+
+
+
+
+
+    });
+</script>
+</body>
+</html>
